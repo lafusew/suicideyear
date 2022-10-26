@@ -1,0 +1,97 @@
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+#volume {
+  height: 14px;
+  width: 0px;
+  background: red;
+}
+
+#rytmTool {
+  z-index: 9;
+  position: absolute;
+
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  padding: 0px 4px;
+
+  color: #fff;
+  border-radius: 4px;
+  background: rgb(56, 0, 119);
+  border-style: solid;
+  border-width: 2px;
+  border-color: rgb(150, 57, 255);
+}
+
+#rytmTool .rytmHeader {
+  cursor: grab;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 10px;
+}
+
+#rytmTool .rytmHeader #rytmHidderBtn {
+  padding-left: 16px;
+  cursor: pointer;
+}
+
+#rytmTool .rytmHeader span {
+  margin-right: 8px;
+}
+
+#rytmTool .rytmBody {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  padding-top: 8px;
+
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: rgb(174, 102, 255);
+}
+
+.hidden {
+  display: none !important;
+}
+
+.rytmBtnContainer {
+  display: flex;
+  flex-direction: row;
+}
+
+.rytmBodyHeader {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 0px 4px;
+}
+
+button,
+select {
+  color: #fff;
+  border-radius: 4px;
+  background: rgb(56, 0, 119);
+
+  border-style: solid;
+  border-width: 2px;
+  border-color: rgb(150, 57, 255);
+  padding: 4px 4px;
+  margin-right: 8px;
+}
+
+select {
+  padding-right: 0px;
+}
