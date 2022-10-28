@@ -1,20 +1,14 @@
 import { LOGS, LOGS_COLORS } from '../constants/logs';
 import { Frequencies } from '../types';
 import { lerp } from '../utils/math';
-import { Audio } from './audio';
 
 const CANVAS_HEIGHT = 255;
 const CANVAS_WIDTH = 600;
 const HEADER_CANVAS_HEIGHT = 30;
 const HEADER_CANVAS_WIDTH = 400;
 
-export class GUI {
+class GUI {
   private static _: GUI;
-
-  private audio: Audio;
-
-  private time: number;
-  private deltaTime: number;
 
   private timingElement: HTMLSpanElement;
   private bpmElement: HTMLSpanElement;
@@ -27,10 +21,6 @@ export class GUI {
 
   private constructor() {
     console.log(LOGS.CREATING_RENDER_MODULE_INSTANCE, LOGS_COLORS.ORANGE);
-
-    this.audio = Audio.getInstance();
-    this.time = this.audio.getCurrentPlaybackState().time;
-    this.deltaTime = 0;
 
     this.timingElement = this.getTimingElement();
     this.bpmElement = this.getBpmElement();
@@ -59,39 +49,29 @@ export class GUI {
     return this._;
   }
 
-  public onFrame(): void {
-    requestAnimationFrame(this.onFrame.bind(this));
-
-    const { time: currentTime } = this.audio.getCurrentPlaybackState();
-
-    this.deltaTime = currentTime - this.time;
-    this.time = currentTime;
-    
-    if (this.deltaTime < 0.016) {
-      return;
-    }
-    
-    this.render();
-  }
-
-  private render() {
+  public render(props: {
+    time: number;
+    bpm: number;
+    volume: number;
+    frequencies: Uint8Array;
+    waveform: Uint8Array;
+  }) {
     this.mainCtx.clearRect(0, 0, this.mainCanvas.width, this.mainCanvas.height);
     this.headerCtx.clearRect(0, 0, this.headerCanvas.width, this.headerCanvas.height);
 
-    this.drawTime();
-    this.drawBpm();
+    this.drawTime(props.time);
+    this.drawBpm(props.bpm);
 
-    this.drawVolume();
-    this.drawBars();
-    this.drawWaveform();
+    this.drawVolume(props.volume);
+    this.drawFrequencies(props.frequencies);
+    this.drawWaveform(props.waveform);
   }
 
-  private drawTime() {
-    this.timingElement.innerHTML = this.getTime(this.time);
+  private drawTime(time: number) {
+    this.timingElement.innerHTML = this.formatTime(time);
   }
 
-  private drawBpm() {
-    const bpm = this.audio.getBpm();
+  private drawBpm(bpm: number) {
     if (bpm) {
       this.bpmElement.innerHTML = `${bpm} [${bpm * 2}] BPM`;
     } else {
@@ -103,8 +83,8 @@ export class GUI {
   lerpVolumeWidth = 0;
   isVolumeGoingUp = false;
   volumeWidthNoLerp = 0;
-  private drawVolume() {
-    const volume = this.audio.getVolume();
+  private drawVolume(volume: number) {
+    volume = volume * .8;
 
     this.volumeWidthNoLerp = volume * this.headerCanvas.width / 255 * 2;
 
@@ -123,17 +103,15 @@ export class GUI {
     this.headerCtx.fillRect(0, 0, this.volumeWidth, 30);
   }
 
-  private drawBars() {
-    const bars = this.audio.getFrequencies();
+  private drawFrequencies(frequencies: Uint8Array) {
+    const barWidth = this.mainCanvas.width / frequencies.length * 1.4;
 
-    const barWidth = this.mainCanvas.width / bars.length * 1.4;
-
-    for (let i = 0; i < bars.length; i++) {
-      const barHeight = bars[i];
+    for (let i = 0; i < frequencies.length; i++) {
+      const barHeight = frequencies[i] * .8;
       const x = barWidth * i;
       const y = (this.mainCanvas.height / 2) - .5 * barHeight;
 
-      const light = Math.floor(barHeight * 100 / 255) * 1.5;
+      const light = Math.floor(barHeight * 100 / 255) * 1.4;
 
       this.mainCtx.fillStyle = `hsl(268, 100%, ${light > 30 ? light : 30}%)`;
 
@@ -157,9 +135,8 @@ export class GUI {
     ctx.stroke();
   }
 
-  private drawWaveform() {
+  private drawWaveform(waveform: Uint8Array) {
     const WAVE_FORM_HEIGHT = 30;
-    const waveform = this.audio.getWaveform();
 
     const sliceWidth = this.headerCanvas.width / waveform.length;
     let x = 0;
@@ -185,15 +162,23 @@ export class GUI {
     this.headerCtx.stroke();
   }    
 
-  private getTime(time: number): string {
+  private formatTime(time: number): string {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time - minutes * 60);
     const milliseconds = Math.floor((time - minutes * 60 - seconds) * 100);
-    
-    return `${minutes < 10 ? 0 : ''}${minutes}:${seconds < 10 ? 0 : ''}${seconds}:${milliseconds < 10 ? 0 : ''}${milliseconds}`; 
+
+    const minutesStr = minutes < 10 ? `0${minutes}` : minutes;
+    const secondsStr = seconds < 10 ? `0${seconds}` : seconds;
+    const millisecondsStr = milliseconds < 10 ? `0${milliseconds}` : milliseconds;
+
+    return `${minutesStr}:${secondsStr}:${millisecondsStr}`; 
   }
 
   private getTimingElement() {
+    if (this.timingElement) {
+      return this.timingElement;
+    }
+
     const timingEl = document.querySelector('#rytmTiming');
     if (!timingEl) {
       throw new Error('No timing element found');
@@ -222,14 +207,16 @@ export class GUI {
   }
 
   private addEventListeners() {
-    window.addEventListener('reset', () => {
-      this.timingElement.innerHTML = '00:00:00';
-      this.bpmElement.innerHTML = '';
-      this.mainCtx.clearRect(0, 0, this.mainCanvas.width, this.mainCanvas.height);
-      this.headerCtx.clearRect(0, 0, this.headerCanvas.width, this.headerCanvas.height);
-      this.drawCenterLine(this.mainCanvas, this.mainCtx, true);
-      this.drawCenterLine(this.headerCanvas, this.headerCtx, false);
-    });
+    window.addEventListener('reset', this.resetGUI.bind(this));
+  }
+
+  private resetGUI() {
+    this.timingElement.innerHTML = '00:00:00';
+    this.bpmElement.innerHTML = '';
+    this.mainCtx.clearRect(0, 0, this.mainCanvas.width, this.mainCanvas.height);
+    this.headerCtx.clearRect(0, 0, this.headerCanvas.width, this.headerCanvas.height);
+    this.drawCenterLine(this.mainCanvas, this.mainCtx, true);
+    this.drawCenterLine(this.headerCanvas, this.headerCtx, false);
   }
 
   public static appendHTML() {
@@ -246,14 +233,14 @@ export class GUI {
             <button id="rytmStart">Play</button>
             <button id="rytmReset">Reset</button>
             <select selected="ALL">
-              <option value="ALL">ALL</option>
-              <option value="BASS">LOW</option>
-              <option value="MID">MID</option>
-              <option value="HIGH">HIGH</option>
+              <option value="${Frequencies.ALL}">${Frequencies.ALL}</option>
+              <option value="${Frequencies.LOW}">${Frequencies.LOW}</option>
+              <option value="${Frequencies.MID}">${Frequencies.MID}</option>
+              <option value="${Frequencies.HIGH}">${Frequencies.HIGH}</option>
             </select>
           </div>
-          <span id="rytmBpm"></span>
-          <span id="rytmTiming"></span>
+          <span id="rytmBpm">BPM</span>
+          <span id="rytmTiming">00:00:00</span>
         </div>
         <canvas id="rytmMainCanvas" style="width:600px; height: 255px"></canvas>
       </div>
@@ -262,25 +249,6 @@ export class GUI {
 
     document.body.innerHTML += html;
   }
-
-  public getFrequencyRange(range: Frequencies) {
-    switch (range) {
-    case Frequencies.BASS:
-      return this.audio.getLows();
-    case Frequencies.MID:
-      return this.audio.getMids();
-    case Frequencies.HIGH:
-      return this.audio.getHighs();
-    default:
-      return this.audio.getAllFreqs();
-    } 
-  }
-
-  public getVolume() {
-    return this.audio.getVolume();
-  }
-
-  public getBpm() {
-    return this.audio.getBpm();
-  }
 }
+
+export default GUI;
