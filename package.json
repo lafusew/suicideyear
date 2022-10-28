@@ -9,7 +9,6 @@
     "preview": "vite preview"
   },
   "devDependencies": {
-    "@types/three": "^0.144.0",
     "@typescript-eslint/eslint-plugin": "^5.40.1",
     "@typescript-eslint/parser": "^5.40.1",
     "eslint": "^8.26.0",
@@ -17,7 +16,6 @@
     "vite": "^3.1.0"
   },
   "dependencies": {
-    "realtime-bpm-analyzer": "^2.1.6",
-    "three": "^0.145.0"
+    "realtime-bpm-analyzer": "^2.1.6"
   }
 }
