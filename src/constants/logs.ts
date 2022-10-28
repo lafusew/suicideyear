@@ -5,6 +5,8 @@ export const LOGS = {
   AUDIO_MODULE_INSTANCE_CREATED: '%cAudio module instance created',
   CREATING_RENDER_MODULE_INSTANCE: '%cCreating GUI module instance...',
   RENDER_MODULE_INSTANCE_CREATED: '%cGUI module instance created',
+  CREATING_CORE_MODULE_INSTANCE: '%cCreating core module instance...',
+  CORE_MODULE_INSTANCE_CREATED: '%cCore module instance created',
 };
 
 export const LOGS_COLORS = {
