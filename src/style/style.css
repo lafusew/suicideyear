@@ -7,12 +7,6 @@ body {
   font-family: 'Share Tech Mono', monospace;
 }
 
-#volume {
-  height: 14px;
-  width: 0px;
-  background: red;
-}
-
 #rytmTool {
   z-index: 9;
   position: absolute;

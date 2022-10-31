@@ -1,8 +1,5 @@
 import { LOGS, LOGS_COLORS } from '../constants/logs';
-import BpmAnalyser from './audio/bpm';
-import FrequenciesAnalyser from './audio/frequencies';
-import VolumeAnalyser from './audio/volume';
-import WaveformAnalyser from './audio/waveform';
+import { BpmAnalyser, WaveformAnalyser, VolumeAnalyser, FrequenciesAnalyser} from './audio';
 import GUI from './gui';
 
 class Core {
@@ -25,11 +22,12 @@ class Core {
   private Gui?: GUI;
 
   private constructor(props: {
-    withGui?: boolean,
+    GUI?: boolean,
+    audioSrc: string,
   }) {
     console.log(LOGS.CREATING_AUDIO_MODULE_INSTANCE, LOGS_COLORS.ORANGE);
     
-    this.audioElement = this.getAudioElement();
+    this.audioElement = this.getAudioElement(props.audioSrc);
     this.audioContext = new AudioContext();
     this.source = this.audioContext.createMediaElementSource(this.audioElement);
     
@@ -40,7 +38,7 @@ class Core {
 
     this.addEventListeners();
 
-    if (props.withGui) {
+    if (props.GUI) {
       GUI.appendHTML();
       this.Gui = GUI.instanciate();
     }
@@ -105,18 +103,20 @@ class Core {
     });
   }
 
-  private getAudioElement() {
-    const audioEl = document.querySelector('audio');
-    if (!audioEl) {
-      throw new Error('No audio element found');
-    }
+  private getAudioElement(src: string): HTMLAudioElement {
+    // const audio = document.createElement('audio');
+    // audio.id = 'rytm-audio';
+    // audio.src = src;
 
-    return audioEl;
+    // document.body.append(audio);
+    const audio = document.querySelector('#rytm-audio') as HTMLAudioElement;
+  
+    return audio;
   }
 
-  public static instanciate(gui: boolean): Core {
+  public static instanciate(audioSrc: string, GUI?: boolean,): Core {
     if (!this._) {
-      this._ = new Core({withGui: gui});
+      this._ = new Core({GUI, audioSrc});
     }
 
     return this._;

@@ -3,10 +3,17 @@ import { Inputs } from './modules/inputs';
 import './style/style.css';
 import Core from './modules/core';
 
+interface Config {
+  useGUI?: boolean;
+  audioSource: string;
+}
+
 class Rytm {
   tool: Core;
-  constructor() {
-    this.tool = Core.instanciate(true);
+  constructor(options: Config) {
+    const { useGUI = true, audioSource} = options;
+
+    this.tool = Core.instanciate(audioSource, useGUI);
     this.tool.onFrame();
 
     Inputs.instanciate();
@@ -33,6 +40,8 @@ class Rytm {
   }
 }
 
-new Rytm();
+new Rytm({
+  audioSource: 'src/music/midnight.mp3',
+});
 
 export default Rytm;
